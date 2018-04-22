@@ -1,36 +1,41 @@
 package com.example
 
+import com.example.model._
 import scala.concurrent.{ExecutionContext, Future}
 import ExecutionContext.Implicits.global
 
 object UserRepository {
 
-  var users = Set.empty[User]
+  private var users = Map.empty[String, User]
 
-  private def findBy(name: String): Option[User] = users.find(name == _.name)
-
-  private def notExists(user: User): Boolean = !users.exists(user.name == _.name)
-
-  def find(name: String): Future[Option[User]] = Future(findBy(name))
-
-  def findAll: Future[Users] = Future(Users(users.toSeq))
-
-  def insert(user: User): Future[Boolean] = Future {
-    if (notExists(user)) {
-      users += user
-      true
-    } else false
+  private def find(name: String): User = {
+    users.get(name) match {
+      case Some(user) => user
+      case _ => throw UserNotFound(name)
+    }
   }
 
-  def delete(name: String): Future[Option[User]] = Future {
-    val user = findBy(name)
-    if (user.isDefined) users -= user.get
+  def selectAll: Future[Users] = Future(Users(users.values.toSeq))
+
+  def select(name: String): Future[User] = Future(find(name))
+
+  def insert(user: User): Future[Unit] = Future {
+    val name = user.name
+    if (users.contains(name))
+      throw UserAlreadyExists(name)
+    users += (name -> user)
+    Future.unit
+  }
+
+  def delete(name: String): Future[User] = Future {
+    val user = find(name)
+    users -= name
     user
   }
 
-  def update(name: String): Future[Option[User]] = Future {
-    val user = findBy(name)
-    if (user.isDefined) users += user.get
-    user
+  def update(name: String, newUser: User): Future[User] = Future {
+    val oldUser = find(name)
+    users += (name -> newUser)
+    oldUser
   }
 }
