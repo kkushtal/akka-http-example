@@ -2,13 +2,16 @@ package com.example
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
+import scalikejdbc.config.DBs
 
-object QuickstartServer extends App with UserRoutes {
+object QuickstartServer extends App with Routes {
+
+  DBs.setupAll()
+
   implicit val system: ActorSystem = ActorSystem("akkaHttpExample")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
